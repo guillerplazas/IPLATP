@@ -88,9 +88,7 @@ async def complete_solution(ex: str, prob_num: int, attempt: int):
           {"role": "user", "content": ex}]
     res_pre = await asyncio.get_event_loop().run_in_executor(None, lambda: 
         openai.chat.completions.create(model="gpt-4o", messages=cont, n=1,))
-    #print(f"\n{'_'*40}\n{res_pre}\n{'_'*40}\n")
     res = res_pre.choices[0].message.content.split('```isabelle')[1].split('```')[0]
-    #res_disp=res.replace("\n", "<br>")
     res_disp=res_pre.choices[0].message.content.replace("\n", "<br>")
 
     # Code to display the response in a scrolling table
@@ -132,13 +130,9 @@ async def process_problem(theory, n_prob, client, succ_count,max_att=MAX_ATT):
             succ_count[0] += 1
             return True
         else:
-            # Select one of the prompt options
-            #current_prompt = theory
-            print(f"_{'_'*40}_\nPrompt:\n")
-            current_prompt = create_error_prompt(solution, errors)
-            print(current_prompt)
-            print(f"_{'_'*40}_\n")
-            #print(insert_errors_as_comments(solution, errors))
+            # Select one of the prompt options: 
+            current_prompt = theory 
+            #current_prompt = create_error_prompt(solution, errors)
             #current_prompt = insert_errors_as_comments(solution, errors)
     
     print(f"PROOF NOT FOUND FOR PROBLEM {n_prob} AFTER {max_att} ATTEMPTS\n{'_'*40}\n")
@@ -146,14 +140,13 @@ async def process_problem(theory, n_prob, client, succ_count,max_att=MAX_ATT):
 
 async def worker(client, theory_queue, success_counter):
     while True:
-        #async with semaphore:
-            if theory_queue.empty():
-                break
-            num_prob, theory = await theory_queue.get()
-            await process_problem(theory, num_prob, client, success_counter)
-            theory_queue.task_done()
+        if theory_queue.empty():
+            break
+        num_prob, theory = await theory_queue.get()
+        await process_problem(theory, num_prob, client, success_counter)
+        theory_queue.task_done()
 
-#async def benchmark(theory_files):
+async def benchmark(theory_files):
     server_info, _ = start_isabelle_server()
     clients = [get_isabelle_client(server_info) for _ in range(4)]
     theory_queue = asyncio.Queue()
@@ -172,5 +165,5 @@ async def worker(client, theory_queue, success_counter):
     print(f"\nSCORE: {success_count[0]} out of {len(theory_files)}")
 
 
-# Run the benchmark
+
 
